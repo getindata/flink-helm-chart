@@ -1,0 +1,81 @@
+---
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: {{ tpl .Values.deploymentName . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+  imagePullPolicy: {{ .Values.image.pullPolicy }}
+  flinkVersion: {{ .Values.flinkVersion }}
+  serviceAccount: {{ tpl .Values.serviceAccount.name . }}
+  restartNonce: {{ .Values.restartNonce }}
+  {{- if .Values.ingress }}
+  ingress:
+    {{- toYaml .Values.ingress | nindent 4 }}
+  {{- end }}
+  jobManager:
+    {{- toYaml .Values.jobManager | nindent 4 }}
+  taskManager:
+    {{- toYaml .Values.taskManager | nindent 4 }}
+  {{- if .Values.podTemplate }}
+  podTemplate:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: {{ .Values.podTemplate.metadata.name }}
+    spec:
+      containers:
+        - name: flink-main-container
+          {{- if .Values.podTemplate.volumeMounts }}
+          volumeMounts:
+            {{- if .Values.podTemplate.volumeMounts | default false }}
+              {{- toYaml .Values.podTemplate.volumeMounts | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.podTemplate.env }}
+          env:
+            {{- if .Values.podTemplate.env | default false }}
+              {{- tpl (toYaml .Values.podTemplate.env) . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+      {{- if .Values.podTemplate.volumes }}
+      volumes:
+        {{- if .Values.podTemplate.volumes | default false }}
+          {{- toYaml .Values.podTemplate.volumes | nindent 8 }}
+        {{- end }}
+      {{- end }}
+  {{- end }}
+  {{- if eq .Values.type "session" }}
+  # Flink Session Cluster
+  {{- else }}
+  job:
+    {{- if eq .Values.type "python" }}
+    jarURI: {{ .Values.python.jarURI }}
+    entryClass: {{ .Values.python.entryClass }}
+    args:
+      - -pyexec
+      - {{ .Values.python.pyexec }}
+      - -pyclientexec
+      - {{ .Values.python.pyclientexec }}
+      - -py
+      - {{ .Values.job.pyscript }}
+      {{- range .Values.job.args }}
+      - {{ . }}
+      {{- end }}
+    {{- else if eq .Values.type "java" }}
+    jarURI: {{ .Values.job.jarURI }}
+    entryClass: {{ .Values.job.entryClass }}
+    args:
+      {{- range .Values.args }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
+    state: {{ .Values.job.state }}
+    upgradeMode: {{ .Values.job.upgradeMode }}
+    parallelism: {{ .Values.job.parallelism }}
+  {{- end }}
+  {{- if .Values.flinkConfiguration }}
+  flinkConfiguration:
+    {{- tpl (toYaml .Values.flinkConfiguration) . | nindent 4 }}
+  {{- end }}
