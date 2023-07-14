@@ -1,4 +1,6 @@
 ---
+deploymentName: flink-deployment
+
 # Create flink role
 role:
   create: false
