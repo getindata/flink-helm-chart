@@ -1,0 +1,46 @@
+---
+deploymentName: flink-deployment
+
+# Create flink role
+role:
+  create: false
+
+# Create service account for Flink Deployment and bind it to flink role
+serviceAccount:
+  create: true
+  name: flink
+
+image:
+  repository: flink
+  tag: 1.16.2-scala_2.12-java11
+  pullPolicy: IfNotPresent
+
+flinkVersion: v1_16
+
+restartNonce: 1
+
+jobManager:
+  resource:
+    cpu: 1
+    memory: 1g
+
+taskManager:
+  resource:
+    cpu: 1
+    memory: 1g
+
+# Provide "type", one of "session", "python", "java"
+
+job:
+  state: "running"
+  upgradeMode: "last-state"
+  parallelism: 1
+  args: []
+
+python:
+  jarURI: file:///opt/flink/opt/flink-python-1.16.0.jar
+  entryClass: org.apache.flink.client.python.PythonDriver
+  pyexec: /usr/local/bin/python3
+  pyclientexec: /usr/local/bin/python3
+
+flinkConfiguration: { }
