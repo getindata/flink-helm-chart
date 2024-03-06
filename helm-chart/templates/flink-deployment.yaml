@@ -74,6 +74,9 @@ spec:
     state: {{ .Values.job.state }}
     upgradeMode: {{ .Values.job.upgradeMode }}
     parallelism: {{ .Values.job.parallelism }}
+    {{- if .Values.job.savepointTriggerNonce }}
+    savepointTriggerNonce: {{ .Values.job.savepointTriggerNonce }}
+    {{- end }}
   {{- end }}
   {{- if .Values.flinkConfiguration }}
   flinkConfiguration:
